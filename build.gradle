@@ -1,0 +1,137 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'org.springframework.boot' version '3.0.1'
+    id 'io.spring.dependency-management' version '1.1.4'
+//    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
+}
+
+bootJar.enabled = false
+jar.enabled = false
+
+allprojects {
+    group = 'com.switchwon'
+    version = '0.0.1-SNAPSHOT'
+    sourceCompatibility = '17'
+
+    ext.projectId = 'payment'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+
+    ext {
+        queryDslVersion = '5.0.0'
+        lombokVersion = '1.18.26'
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+        implementation 'org.hibernate.validator:hibernate-validator:7.0.2.Final'
+        implementation 'org.glassfish:jakarta.el:3.0.3'
+
+        annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+        annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+        annotationProcessor 'org.projectlombok:lombok'
+
+        compileOnly 'org.projectlombok:lombok'
+        runtimeOnly 'com.h2database:h2'
+
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+
+    jacoco {
+        toolVersion = "0.8.10"
+        reportsDirectory = layout.buildDirectory.dir('jacocoReport')
+    }
+
+
+    jacocoTestReport {
+
+        dependsOn test
+
+        reports {
+            xml.required = false
+            csv.required = false
+            html.required = true
+        }
+
+        afterEvaluate {
+            classDirectories.setFrom(
+                    // 그 외의 매칭되는 클래스도 제외 대상
+                    files(classDirectories.files.collect {
+                        fileTree(dir: it, excludes: [
+                                "com.switchwon.payment.domain.**.**",
+                                "com.switchwon.payment.common.**",
+                                "**/*Application*",
+                                "**/*Config*",
+                                "**/*DTO*",
+                                "**/*Exception*"
+                        ])
+                    })
+            )
+        }
+        // 리포트 생성 후 커버리지 체크
+        finalizedBy 'jacocoTestCoverageVerification'
+    }
+
+// jacoco 커버리지 검증 설정
+    jacocoTestCoverageVerification {
+        violationRules {
+            rule {
+                enabled = true // 커버리지 적용 여부
+                element = 'CLASS' // 커버리지 적용 단위
+
+                // 라인 커버리지 설정
+                // 적용 대상 전체 소스 코드들을 한줄 한줄 따졌을 때 테스트 코드가 작성되어 있는 줄의 빈도
+                // 테스트 코드가 작성되어 있는 비율이 90% 이상이어야 함
+                limit {
+                    counter = 'LINE'
+                    value = 'COVEREDRATIO'
+                    minimum = 0.90
+                }
+
+                // 라인 최대 갯수 설정
+                // 빈 줄을 제외하고 하나의 자바 파일에서 작성될 수 있는 최대 라인 갯수
+                // 한 파일에 최대 500줄까지 작성되어야 함
+                limit {
+                    counter = 'LINE'
+                    value = 'TOTALCOUNT'
+                    maximum = 500
+                }
+
+                excludes = [
+                        "com.switchwon.payment.domain.**.**",
+                        "com.switchwon.payment.common.**",
+                        "**/*Application*",
+                        "**/*Config*",
+                        "**/*DTO*",
+                        "**/*Exception*"
+                ]
+            }
+        }
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport
+    }
+
+}

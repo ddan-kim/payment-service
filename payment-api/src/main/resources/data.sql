@@ -1,0 +1,3 @@
+insert into users (user_id, user_name, user_password, email) values(12345, '김아무개', '암호화된 비밀번호', 'kimhyunjun1179@gmail.com');
+insert into account (user_id, account_number, account_type, currency, balance, account_status, CREATED_at,  CREATED_BY, MODIFIED_at, MODIFIED_BY) values ( 12345, '110-1234566', 'Test' , 'USD', '1000.00', 'ACTIVE',now(), 12345, now(), 12345);
+-- insert into account (account_id, user_id, account_number, account_type, currency, balance, account_status, CREATED_at,  CREATED_BY, MODIFIED_at, MODIFIED_BY) values (1, 12345, '110-1234566', 'Test' , 'USD', '1000.00', 'ACTIVE','2024-02-03T16:04:31', 12345, '2024-02-03T16:04:31', 12345);
